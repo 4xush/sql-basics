@@ -64,13 +64,37 @@ This returns all workers in departments located in Delhi.
 
 ## Is IN Case Sensitive?
 
-- If you want case-sensitive matching, you can use the `COLLATE` clause:
+By default, the `IN` operator (and `=`) is case-sensitive in SQLite. So `'Amit'` is not equal to `'amit'`. That's why `NOT IN ('amit', 'priya')` didn't exclude `'Amit'` and `'Priya'`.
+
+### Making Comparisons Case-Insensitive
+
+#### Method 1: Using LOWER()
+
+Convert both the column and the values to lowercase:
 
 ```sql
-SELECT * FROM worker WHERE first_name IN ('amit', 'priya') COLLATE binary;
+SELECT *
+FROM worker
+WHERE LOWER(first_name) NOT IN ('amit', 'priya');
 ```
 
-This will only match exact case.
+- `LOWER(first_name)` converts the name to lowercase
+- `'amit'` and `'priya'` are already lowercase
+- Now the comparison ignores case
+
+#### Method 2: Using COLLATE NOCASE
+
+SQLite supports NOCASE collation for case-insensitive comparisons:
+
+```sql
+SELECT *
+FROM worker
+WHERE first_name NOT IN ('amit', 'priya') COLLATE NOCASE;
+```
+
+This makes the `IN` comparison ignore case.
+
+Both approaches will now correctly exclude `'Amit'` and `'Priya'` regardless of uppercase/lowercase.
 
 ### Case Sensitivity in WHERE
 
@@ -91,37 +115,6 @@ PRAGMA case_sensitive_like = ON;
 SELECT * FROM products WHERE name LIKE 'Pen';
 ```
 
-## Summary
-
-SQLite, the IN operator (and =) is case-sensitive by default. So 'Amit' is not equal to 'amit'. That’s why your NOT IN ('amit', 'priya') didn’t exclude 'Amit' and 'Priya'.
-
-How to make it case-insensitive
-1️⃣ Using LOWER()
-
-Convert both the column and the values to lowercase:
-
-SELECT \*
-FROM worker
-WHERE LOWER(first_name) NOT IN ('amit', 'priya');
-
-    LOWER(first_name) converts the name to lowercase.
-
-    'amit' and 'priya' are already lowercase.
-
-    Now the comparison ignores case.
-
-2️⃣ Using COLLATE NOCASE
-
-SQLite supports NOCASE collation for case-insensitive comparisons:
-
-SELECT \*
-FROM worker
-WHERE first_name NOT IN ('amit', 'priya') COLLATE NOCASE;
-
-    This makes the IN comparison ignore case.
-
-✅ Both approaches will now correctly exclude 'Amit' and 'Priya' regardless of uppercase/lowercase.
-
 ## Common Error: Using YEAR() and MONTH() Functions in SQLite
 
 If you try to use `YEAR()` and `MONTH()` functions like in MySQL, SQLite will throw an error:
@@ -138,8 +131,8 @@ Parse error: no such function: year
 
 **Why does this happen?**
 
-- SQLite does not have built-in `YEAR()` and `MONTH()` functions like MySQL or other databases.
-- These functions are specific to MySQL and are not available in SQLite.
+- SQLite does not have built-in `YEAR()` and `MONTH()` functions like MySQL or other databases
+- These functions are specific to MySQL and are not available in SQLite
 
 **In MySQL:**
 
@@ -173,3 +166,9 @@ SELECT * FROM worker WHERE CAST(strftime('%Y', joining_date) AS INTEGER) = 2021 
 ```
 
 ## Summary
+
+- Always use proper boolean expressions in WHERE clauses
+- Use parentheses with IN: `IN ('value1', 'value2')`
+- SQLite is case-sensitive by default; use `LOWER()` or `COLLATE NOCASE` for case-insensitive comparisons
+- Use `strftime()` instead of `YEAR()` and `MONTH()` functions in SQLite
+- Remember that `strftime()` returns strings, so compare accordingly

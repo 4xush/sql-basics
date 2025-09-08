@@ -1,79 +1,102 @@
-in SQLite (and SQL in general) a table can exist without a primary key.
+# SQLite Fundamentals and Common Questions
 
+## Tables Without Primary Keys
+
+In SQLite (and SQL in general), a table can exist without a primary key:
+
+```sql
 CREATE TABLE products (
     name TEXT,
     price REAL
 );
+```
 
+This is a valid table. However, without a primary key:
 
-This is a valid table.
+- **No uniqueness enforcement**: You could insert duplicate rows
+- **No automatic indexing**: Lookups may be slower
+- **No referential integrity**: Cannot be referenced by foreign keys
 
-But since there’s no primary key:
+### Example of Duplicate Rows
 
-Nothing enforces uniqueness of rows.
-
-You could insert duplicate rows:
-
+```sql
 INSERT INTO products VALUES ('Pen', 10.0);
-INSERT INTO products VALUES ('Pen', 10.0);
+INSERT INTO products VALUES ('Pen', 10.0);  -- This will succeed
+```
 
-Both rows will exist.
+Both rows will exist in the table.
 
+## Why Primary Keys Are Important
 
+1. **Uniqueness**: Prevents duplicate rows representing the same entity
+2. **Indexing**: SQLite automatically creates an index on primary keys for faster lookups
+3. **Relationships**: Foreign keys in other tables usually reference primary keys
 
+## SQLite Quirks
 
-Why primary keys are important
+### RowID
 
-Uniqueness → Prevents duplicate rows that represent the same entity.
+If you don't define a primary key, SQLite still has an internal hidden column called `rowid` (unless you explicitly use `WITHOUT ROWID`).
 
-Indexing → Makes lookups faster (since SQLite auto-creates an index on the primary key).
+```sql
+SELECT rowid, * FROM products;
+```
 
-Relationships → If you want foreign keys in other tables, they usually reference a primary key.
+This allows you to uniquely identify each row.
 
+### Modifying Primary Keys
 
+⚠️ **Important**: In SQLite, you cannot directly modify a column to make it a primary key. Instead, you need to:
 
+1. Create a new table with the desired schema
+2. Copy data from the old table
+3. Drop the old table
+4. Rename the new table
 
-SQLite quirks
+## SQLite CLI Headers
 
-If you don’t define a primary key, SQLite still has an internal hidden column called rowid (unless you explicitly use WITHOUT ROWID).
+By default, the SQLite CLI only prints row values without headers. To enable headers:
 
-That means you can still uniquely identify each row using rowid
-
-
-⚠️ In SQLite, you cannot directly modify a column to make it a primary key.
-Instead, the standard way is:
-
-
-By default, the SQLite CLI only prints row values (no headers).
-You need to enable headers.
-
+```sql
 .headers on
+```
 
-SQLite, the IN operator (and =) is case-sensitive by default. So 'Amit' is not equal to 'amit'. That’s why your NOT IN ('amit', 'priya') didn’t exclude 'Amit' and 'Priya'.
+Now all SELECT queries will show column names.
 
-How to make it case-insensitive
-1️⃣ Using LOWER()
+## Case Sensitivity in SQLite
 
-Convert both the column and the values to lowercase:
+### IN Operator and Case Sensitivity
 
+By default, the `IN` operator (and `=`) is case-sensitive in SQLite. So `'Amit'` is not equal to `'amit'`.
+
+This is why `NOT IN ('amit', 'priya')` didn't exclude `'Amit'` and `'Priya'` - they have different cases.
+
+### Making Comparisons Case-Insensitive
+
+#### Method 1: Using LOWER()
+
+Convert both the column and values to lowercase:
+
+```sql
 SELECT *
 FROM worker
 WHERE LOWER(first_name) NOT IN ('amit', 'priya');
+```
 
-    LOWER(first_name) converts the name to lowercase.
+- `LOWER(first_name)` converts the name to lowercase
+- `'amit'` and `'priya'` are already lowercase
+- Now the comparison ignores case
 
-    'amit' and 'priya' are already lowercase.
-
-    Now the comparison ignores case.
-
-2️⃣ Using COLLATE NOCASE
+#### Method 2: Using COLLATE NOCASE
 
 SQLite supports NOCASE collation for case-insensitive comparisons:
 
+```sql
 SELECT *
 FROM worker
 WHERE first_name NOT IN ('amit', 'priya') COLLATE NOCASE;
+```
 
-    This makes the IN comparison ignore case.
+This makes the `IN` comparison ignore case.
 
-✅ Both approaches will now correctly exclude 'Amit' and 'Priya' regardless of uppercase/lowercase.
+Both approaches will now correctly exclude `'Amit'` and `'Priya'` regardless of uppercase/lowercase.

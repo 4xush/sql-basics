@@ -1,44 +1,85 @@
+# Getting Started with SQLite CLI
+
+## SQLite Version Check
+
+To check your SQLite version:
+
+```bash
 sqlite3 --version
+```
 
+## Opening a Database
+
+### Creating a New Database
+
+```bash
 sqlite3 mydb.sqlite
+```
 
-This tells SQLite:
+This command tells SQLite to:
 
-“Open (or create if it doesn’t exist) a database file called mydb.sqlite in the current directory.”
+- Open the database file `mydb.sqlite` if it exists
+- Create a new database file if it doesn't exist
+- Work in the current directory
 
+### Important Note
 
-SQLite opened (or created) a database file named mydb.sqlite. But SQLite doesn’t actually write the file until you create something inside it (like a table, or insert data).
+SQLite creates the database file immediately, but doesn't write it to disk until you create something inside it (like a table or insert data).
 
+## Creating Your First Table
 
+```sql
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL
 );
+```
 
-To view all tables in mydb.sqlite
+## Viewing Tables
+
+To see all tables in your database:
+
+```sql
 .tables
- 
+```
 
-Quit SQLite:
+## Exiting SQLite
 
+To quit the SQLite CLI:
+
+```sql
 .quit
+```
 
+## Common Pitfall: Temporary vs Persistent Database
 
+### The Problem
 
-Your real DB (mydb.sqlite) is still safe in ~/Desktop/sql, but you didn’t open it.
+If you run `sqlite3` without a filename:
 
-✅ How to fix
+```bash
+sqlite3
+```
 
-Exit (.quit), then open your actual file:
+This creates a **temporary in-memory database** that is lost when you exit.
 
+### The Solution
+
+Always specify your database file:
+
+```bash
 sqlite3 mydb.sqlite
+```
 
-Now check:
+Now verify you're in the correct database:
 
+```sql
 .tables
+```
 
-Key Tip
+### Key Difference
 
-sqlite3 → temporary empty DB (lost on exit).
+- `sqlite3` → Temporary empty database (lost on exit)
+- `sqlite3 mydb.sqlite` → Persistent database saved in your folder
 
-sqlite3 mydb.sqlite → persistent database saved in your folder.
+Your database file `mydb.sqlite` remains safe in your working directory.
