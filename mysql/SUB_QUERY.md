@@ -2,6 +2,13 @@
 
 A subquery, also known as an inner query or a nested query, is a query that is nested inside another SQL query.
 
+* Two types:
+
+  * **Non-correlated subquery** → runs once, result is used by outer query.
+  * **Correlated subquery** → runs once **for every row** of the outer query (like a loop).
+
+---
+
 The simplest way to think about it is as a **two-step question**. You need the answer to an inner question before you can even ask the outer question.
 
 **The Golden Rule:** The subquery (the inner query) **always runs first**. Its result is then used by the outer query.
