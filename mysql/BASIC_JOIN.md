@@ -1,190 +1,184 @@
-JOIN -
+# SQL JOINs in MySQL
 
-apply when there is common attribute in table
+This document explains the different types of SQL JOINs in MySQL (and MariaDB). JOINs are used to combine rows from two or more tables based on a related column.
 
-Select c.\* , o.order_name -> Select all column of customer table and only order_name column from order table;
+## Prerequisites
 
-INNER JOIN - ONLY ONE COMMON COLUMN VALUE'S ROW
+JOINs are applied when there is a common attribute (column) between tables. For example:
 
-MariaDB [punisher]> select w.\* , t.worker_title from worker w inner join title t on w.worker_id = t.worker_ref_id;
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE | DEPARTMENT | worker_title |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Sr. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Asst. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | HR Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Finance Manager |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
+```sql
+SELECT c.*, o.order_name
+FROM customer c
+JOIN orders o ON c.customer_id = o.customer_id;
+```
 
-here row with worker_id 1 is not present in title table so it is not shown in result;
+This selects all columns from the `customer` table and the `order_name` column from the `orders` table.
 
-LEFT JOIN - ALL ROW OF LEFT TABLE + COMMON COLUMN VALUE'S ROW
+## INNER JOIN
 
-MariaDB [punisher]> select w.\* , t.worker_title from worker w left join title t on w.worker_id = t.worker_ref_id;
+An INNER JOIN returns only the rows where there is a match in both tables based on the join condition.
 
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE | DEPARTMENT | worker_title |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | NULL |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Sr. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Asst. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | HR Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Finance Manager |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
+### Example:
 
-here all row of left table(worker) is shown and row with worker_id 1 is shown with NULL value in worker_title column;
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+INNER JOIN title t ON w.worker_id = t.worker_ref_id;
+```
 
-RIGHT JOIN - ALL ROW OF RIGHT TABLE + COMMON COLUMN VALUE'S ROW
+### Result:
 
-MariaDB [punisher]> select w.\* , t.worker_title from worker w right join title t on w.worker_id = t.
-worker_ref_id;
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE | DEPARTMENT | worker_title |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Sr. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Asst. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | HR Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Finance Manager |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-9 rows in set (0.000 sec)
+- Only rows with matching `worker_id` in both tables are returned.
+- Rows without matches (e.g., worker_id 1 in the example) are excluded.
 
-FULL JOIN - ALL ROW OF BOTH TABLE + COMMON COLUMN VALUE'S ROW
-MariaDB [punisher]> select w._ , t.worker_title from worker w full join title t on w.worker_id = t.worker_ref_id;
-ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'full join title t on w.worker_id = t.worker_ref_id' at line 1  
-MariaDB [punisher]> select w._ , t.worker_title from worker w left join title t on w.worker_id = t.worker_ref_id
--> union
--> select w.\* , t.worker_title from worker w right join title t on w.worker_id = t.worker_ref_id;
+Sample output (truncated):
 
-    +-----------+------------+-----------+--------+---------------------+------------+-----------------+
+| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE        | DEPARTMENT | worker_title |
+| --------- | ---------- | --------- | ------ | ------------------- | ---------- | ------------ |
+| 2         | Amitabh    | Singh     | 500000 | 2014-02-20 09:00:00 | Admin      | Sr. Manager  |
+| ...       | ...        | ...       | ...    | ...                 | ...        | ...          |
 
-| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE | DEPARTMENT | worker_title |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | NULL |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Sr. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Asst. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | HR Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Finance Manager |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
+## LEFT JOIN
 
-CARTISIAN JOIN - ALL ROW OF BOTH TABLE
-MariaDB [punisher]> select w.\* , t.worker_title from worker w , title t
+A LEFT JOIN returns all rows from the left table and the matched rows from the right table. If no match, NULL is returned for right table columns.
 
-result in 90 rows because 10\*9 = 90;
+### Example:
 
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE | DEPARTMENT | worker_title |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Sr. Manager |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Lead |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Asst. Manager |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Executive |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Manager |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Lead |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Executive |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | HR Executive |
-| 1 | Amit | Sharma | 450000 | 2015-03-15 09:00:00 | Admin | Finance Manager |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Sr. Manager |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Lead |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Asst. Manager |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Executive |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Manager |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Lead |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Executive |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | HR Executive |
-| 2 | Amitabh | Singh | 500000 | 2014-02-20 09:00:00 | Admin | Finance Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Sr. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Asst. Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Executive |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Manager |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Lead |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Executive |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | HR Executive |
-| 3 | Arjun | Rao | 200000 | 2021-04-20 09:15:00 | Account | Finance Manager |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Sr. Manager |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Asst. Manager |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Executive |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Manager |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Lead |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Executive |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | HR Executive |
-| 4 | Kiran | Patel | 320000 | 2021-12-01 09:00:00 | Admin | Finance Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Sr. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Lead |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Asst. Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Manager |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Lead |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Executive |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | HR Executive |
-| 5 | Suresh | Nair | 150000 | 2022-08-17 14:00:00 | Finance | Finance Manager |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Sr. Manager |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Lead |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Asst. Manager |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Manager |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Lead |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | HR Executive |
-| 6 | Anita | Iyer | 400000 | 2023-05-10 09:00:00 | HR | Finance Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Sr. Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Asst. Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Executive |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Manager |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Lead |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Executive |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | HR Executive |
-| 7 | Rohit | Mehra | 300000 | 2017-01-10 09:00:00 | Account | Finance Manager |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Sr. Manager |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Asst. Manager |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Manager |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Lead |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Executive |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | HR Executive |
-| 8 | Priya | Gupta | 250000 | 2018-11-05 11:00:00 | Admin | Finance Manager |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Sr. Manager |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Lead |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Asst. Manager |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Manager |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Lead |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | HR Executive |
-| 9 | Vikram | Singh | 80000 | 2019-06-18 09:00:00 | HR | Finance Manager |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Sr. Manager |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Lead |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Asst. Manager |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Manager |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Lead |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | HR Executive |
-| 10 | Meena | Chopra | 500000 | 2020-09-12 10:00:00 | Finance | Finance Manager |
-+-----------+------------+-----------+--------+---------------------+------------+-----------------+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+LEFT JOIN title t ON w.worker_id = t.worker_ref_id;
+```
 
-CROSS JOIN - ALL ROW OF BOTH TABLE
-MariaDB [punisher]> select w.\* , t.worker_title from worker w cross join title t;
+### Result:
+
+- All rows from the left table (`worker`) are included.
+- Unmatched rows show NULL in `worker_title`.
+
+Sample output (truncated):
+
+| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE        | DEPARTMENT | worker_title |
+| --------- | ---------- | --------- | ------ | ------------------- | ---------- | ------------ |
+| 1         | Amit       | Sharma    | 450000 | 2015-03-15 09:00:00 | Admin      | NULL         |
+| 2         | Amitabh    | Singh     | 500000 | 2014-02-20 09:00:00 | Admin      | Sr. Manager  |
+| ...       | ...        | ...       | ...    | ...                 | ...        | ...          |
+
+## RIGHT JOIN
+
+A RIGHT JOIN returns all rows from the right table and the matched rows from the left table. If no match, NULL is returned for left table columns.
+
+### Example:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+RIGHT JOIN title t ON w.worker_id = t.worker_ref_id;
+```
+
+### Result:
+
+- All rows from the right table (`title`) are included.
+- Unmatched rows show NULL in worker columns.
+
+Sample output (truncated):
+
+| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE        | DEPARTMENT | worker_title |
+| --------- | ---------- | --------- | ------ | ------------------- | ---------- | ------------ |
+| 2         | Amitabh    | Singh     | 500000 | 2014-02-20 09:00:00 | Admin      | Sr. Manager  |
+| ...       | ...        | ...       | ...    | ...                 | ...        | ...          |
+
+## FULL JOIN
+
+A FULL JOIN returns all rows from both tables, with NULLs where there is no match. MySQL does not support FULL JOIN directly; use UNION of LEFT and RIGHT JOIN.
+
+### Example:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+LEFT JOIN title t ON w.worker_id = t.worker_ref_id
+UNION
+SELECT w.*, t.worker_title
+FROM worker w
+RIGHT JOIN title t ON w.worker_id = t.worker_ref_id;
+```
+
+### Result:
+
+- All rows from both tables are included.
+- Unmatched rows have NULLs.
+
+Sample output (truncated):
+
+| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE        | DEPARTMENT | worker_title |
+| --------- | ---------- | --------- | ------ | ------------------- | ---------- | ------------ |
+| 1         | Amit       | Sharma    | 450000 | 2015-03-15 09:00:00 | Admin      | NULL         |
+| 2         | Amitabh    | Singh     | 500000 | 2014-02-20 09:00:00 | Admin      | Sr. Manager  |
+| ...       | ...        | ...       | ...    | ...                 | ...        | ...          |
+
+## CARTESIAN JOIN (CROSS JOIN)
+
+A CARTESIAN JOIN returns the Cartesian product of both tables, i.e., every row from the first table combined with every row from the second table.
+
+### Example:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w, title t;
+```
+
+Or using CROSS JOIN:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+CROSS JOIN title t;
+```
+
+### Result:
+
+- If `worker` has 10 rows and `title` has 9 rows, the result has 90 rows (10 \* 9).
+- This can produce a large number of rows and should be used cautiously.
+
+
+## CARTESIAN JOIN (CROSS JOIN)
+
+A CARTESIAN JOIN returns the Cartesian product of both tables, i.e., every row from the first table combined with every row from the second table.
+
+### Example:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w, title t;
+```
+
+Or using CROSS JOIN:
+
+```sql
+SELECT w.*, t.worker_title
+FROM worker w
+CROSS JOIN title t;
+```
+
+### Result:
+
+- If `worker` has 10 rows and `title` has 9 rows, the result has 90 rows (10 \* 9).
+- This can produce a large number of rows and should be used cautiously.
+
+Sample output (first few rows):
+
+| WORKER_ID | FIRST_NAME | LAST_NAME | SALARY | JOINING_DATE        | DEPARTMENT | worker_title |
+| --------- | ---------- | --------- | ------ | ------------------- | ---------- | ------------ |
+| 1         | Amit       | Sharma    | 450000 | 2015-03-15 09:00:00 | Admin      | Sr. Manager  |
+| 1         | Amit       | Sharma    | 450000 | 2015-03-15 09:00:00 | Admin      | Lead         |
+| ...       | ...        | ...       | ...    | ...                 | ...        | ...          |
+
+## Summary
+
+- **INNER JOIN**: Only matching rows.
+- **LEFT JOIN**: All from left, matches from right.
+- **RIGHT JOIN**: All from right, matches from left.
+- **FULL JOIN**: All from both (use UNION in MySQL).
+- **CROSS JOIN**: Cartesian product of both.
+
+Use JOINs to combine data efficiently based on relationships between tables.

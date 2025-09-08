@@ -1,87 +1,111 @@
-Yes — if you try to delete a row from worker that is referenced by Title through a foreign key, it will fail by default in MariaDB/MySQL.
+# DELETE Operations and Foreign Keys in MySQL
 
-🔹 Why
+This document explains how DELETE operations work in MySQL, especially when foreign key constraints are involved.
 
-You currently have a foreign key like:
+## DELETE with Foreign Keys
 
-CREATE TABLE Title (
-WORKER_REF_ID INT,
-WORKER_TITLE VARCHAR(50) NOT NULL,
-AFFECTED_FROM DATETIME,
-FOREIGN KEY (WORKER_REF_ID) REFERENCES worker(WORKER_ID)
+If you try to delete a row from a parent table that is referenced by a child table through a foreign key, the deletion will fail by default.
+
+### Example Scenario
+
+Suppose you have:
+
+```sql
+CREATE TABLE worker (
+    WORKER_ID INT PRIMARY KEY,
+    FIRST_NAME VARCHAR(50),
+    LAST_NAME VARCHAR(50),
+    SALARY DECIMAL(10,2),
+    JOINING_DATE DATETIME,
+    DEPARTMENT VARCHAR(50)
 );
 
-    By default, foreign keys prevent deletion if there are child rows referencing the parent.
-
-    So DELETE FROM worker WHERE WORKER_ID = 1; will fail if Title has WORKER_REF_ID = 1.
-
-🔹 How to allow deletion
-
-    CASCADE deletion (automatically delete child rows):
-
-CREATE TABLE Title (
-WORKER_REF_ID INT,
-WORKER_TITLE VARCHAR(50) NOT NULL,
-AFFECTED_FROM DATETIME,
-FOREIGN KEY (WORKER_REF_ID) REFERENCES worker(WORKER_ID)
-ON DELETE CASCADE
+CREATE TABLE title (
+    WORKER_REF_ID INT,
+    WORKER_TITLE VARCHAR(50) NOT NULL,
+    AFFECTED_FROM DATETIME,
+    FOREIGN KEY (WORKER_REF_ID) REFERENCES worker(WORKER_ID)
 );
+```
 
-    Now, deleting a worker will also delete all their titles.
+Attempting to delete a worker that has titles will fail:
 
-    Set foreign key to NULL (optional):
-
-FOREIGN KEY (WORKER_REF_ID) REFERENCES worker(WORKER_ID)
-ON DELETE SET NULL
-
-    Deletes the worker, and sets WORKER_REF_ID in Title to NULL.
-
-    Manual deletion
-
-    First delete from Title:
-
-DELETE FROM Title WHERE WORKER_REF_ID = 1;
-
-    Then delete the worker:
-
+```sql
 DELETE FROM worker WHERE WORKER_ID = 1;
+```
 
-✅ Summary:
+Error: `Cannot delete or update a parent row: a foreign key constraint fails`
 
-    Without ON DELETE CASCADE, deleting a referenced worker fails.
+## Handling Foreign Key Constraints
 
-    With CASCADE or manual deletion, you can remove the worker safely.
+### Option 1: ON DELETE CASCADE
 
-Steps to change the foreign key in title to set WORKER_REF_ID to NULL instead of deleting the row when the referenced worker is deleted.
+Automatically delete child rows when the parent is deleted.
 
-Drop the existing foreign key (ON DELETE CASCADE currently):
+```sql
+CREATE TABLE title (
+    WORKER_REF_ID INT,
+    WORKER_TITLE VARCHAR(50) NOT NULL,
+    AFFECTED_FROM DATETIME,
+    FOREIGN KEY (WORKER_REF_ID) REFERENCES worker(WORKER_ID)
+    ON DELETE CASCADE
+);
+```
 
+Now, deleting a worker will also delete all related titles.
+
+### Option 2: ON DELETE SET NULL
+
+Set the foreign key to NULL when the parent is deleted.
+
+```sql
 ALTER TABLE title DROP FOREIGN KEY title_ibfk_1;
-
-    Add the foreign key back with ON DELETE SET NULL:
 
 ALTER TABLE title
 ADD CONSTRAINT title_ibfk_1
 FOREIGN KEY (WORKER_REF_ID)
 REFERENCES worker(WORKER_ID)
 ON DELETE SET NULL;
+```
 
-✅ Now behavior:
+After deletion:
 
-    If you delete a worker that has entries in title, those title rows remain, but WORKER_REF_ID becomes NULL.
-
-    Example:
-
+```sql
 DELETE FROM worker WHERE WORKER_ID = 1;
-SELECT \* FROM title WHERE WORKER_REF_ID IS NULL;
+SELECT * FROM title WHERE WORKER_REF_ID IS NULL;
+```
 
-Adding back to the worker :
+### Option 3: Manual Deletion
 
-INSERT INTO worker (FIRST_NAME, LAST_NAME, SALARY, JOINING_DATE, DEPARTMENT) VALUES ('Amit', 'Sharma', 450000, '2015-03-15 09:00:00',
-'Admin');
+Delete child rows first, then the parent.
 
-and set the previous primary key
+```sql
+DELETE FROM title WHERE WORKER_REF_ID = 1;
+DELETE FROM worker WHERE WORKER_ID = 1;
+```
 
+## Restoring Data
+
+To add back a worker:
+
+```sql
+INSERT INTO worker (FIRST_NAME, LAST_NAME, SALARY, JOINING_DATE, DEPARTMENT)
+VALUES ('Amit', 'Sharma', 450000, '2015-03-15 09:00:00', 'Admin');
+```
+
+To set the primary key (if needed):
+
+```sql
 UPDATE worker
 SET WORKER_ID = 1
 WHERE WORKER_ID = 11;
+```
+
+## Summary
+
+- By default, foreign keys prevent deletion of referenced rows.
+- Use `ON DELETE CASCADE` to auto-delete children.
+- Use `ON DELETE SET NULL` to nullify foreign keys.
+- Manually delete children before parents as an alternative.
+
+Choose the option that fits your data integrity requirements.
