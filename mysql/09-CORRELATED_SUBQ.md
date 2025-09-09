@@ -197,6 +197,9 @@ WHERE first_name LIKE 'A%'
 
 ### ✅ Correlated subquery (same logic but correlated)
 
+
+**If names repeat (duplicate name allowed), the correlated query filters only the highest-paid among them**
+
 ```sql
 SELECT w1.first_name, w1.salary
 FROM worker w1
@@ -209,19 +212,128 @@ WHERE w1.first_name LIKE 'A%'
   );
 ```
 
-🔎 What happens here:
+Perfect 👍 Let’s do a **dry run** with an example table so you can clearly see how that subquery works.
 
-* For each row `w1` (say `Amit` with `450000`):
+---
 
-  * Subquery runs: `SELECT MAX(salary) FROM worker w2 WHERE w2.first_name LIKE 'A%' AND w2.first_name = 'Amit'`
-  * → Returns `450000`.
-  * Outer query checks: `w1.salary = 450000` ✅ keeps it.
+### Example `worker` table
 
-* For row `Amitabh` (`500000`):
+| worker\_id | first\_name | salary |
+| ---------- | ----------- | ------ |
+| 1          | Amit        | 450000 |
+| 2          | Amit        | 320000 |
+| 3          | Anil        | 500000 |
+| 4          | Anil        | 400000 |
+| 5          | Ajay        | 350000 |
+| 6          | Bob         | 600000 |
 
-  * Subquery runs with `w1.first_name = 'Amitabh'`.
-  * Returns `500000`.
-  * Keeps it.
+---
+
+### Query in focus
+
+```sql
+SELECT MAX(w2.salary)
+FROM worker w2
+WHERE w2.first_name LIKE 'A%'
+  AND w2.first_name = w1.first_name
+```
+
+This is a **correlated subquery**: it runs once for each row of the outer query (`w1`).
+Let’s dry run it row by row.
+
+---
+
+### 🔎 Dry Run
+
+#### Case 1: Outer row (`w1`) = **Amit (450000)**
+
+* Condition: `w2.first_name LIKE 'A%'` → so only names starting with "A" are considered.
+* Condition: `w2.first_name = w1.first_name` → only rows where `first_name = Amit`.
+
+Subset of table considered by subquery:
+
+| first\_name | salary |
+| ----------- | ------ |
+| Amit        | 450000 |
+| Amit        | 320000 |
+
+`MAX(w2.salary)` = **450000**
+
+So, subquery returns `450000`.
+
+---
+
+#### Case 2: Outer row (`w1`) = **Amit (320000)**
+
+Same filtering → only "Amit" rows:
+
+| first\_name | salary |
+| ----------- | ------ |
+| Amit        | 450000 |
+| Amit        | 320000 |
+
+`MAX(w2.salary)` = **450000** again.
+
+So, subquery returns `450000`.
+
+---
+
+#### Case 3: Outer row (`w1`) = **Anil (500000)**
+
+Subset filtered:
+
+| first\_name | salary |
+| ----------- | ------ |
+| Anil        | 500000 |
+| Anil        | 400000 |
+
+`MAX(w2.salary)` = **500000**
+
+So, subquery returns `500000`.
+
+---
+
+#### Case 4: Outer row (`w1`) = **Anil (400000)**
+
+Same subset as above.
+`MAX(w2.salary)` = **500000**
+
+---
+
+#### Case 5: Outer row (`w1`) = **Ajay (350000)**
+
+Subset filtered:
+
+| first\_name | salary |
+| ----------- | ------ |
+| Ajay        | 350000 |
+
+`MAX(w2.salary)` = **350000**
+
+---
+
+#### Case 6: Outer row (`w1`) = **Bob (600000)**
+
+* Fails `LIKE 'A%'` condition, so not even considered by outer query.
+
+---
+
+### ✅ Effect
+
+* For **Amit**, subquery always returns `450000`.
+* For **Anil**, subquery always returns `500000`.
+* For **Ajay**, subquery returns `350000`.
+* So only the **highest salary row per first name** (starting with A) will satisfy the condition `w1.salary = subquery_result`.
+
+Final Output:
+
+| first\_name | salary |
+| ----------- | ------ |
+| Amit        | 450000 |
+| Anil        | 500000 |
+| Ajay        | 350000 |
+
+---
 
 * So each row is tested **individually**, subquery depends on outer row → correlation.
 
@@ -371,6 +483,7 @@ Correlated subquery = compute again and again per row.
 * **Correlated subquery**: Simple logic, quick to write, good for small tables.
 * **JOIN + GROUP BY**: More efficient for large datasets (millions of rows).
 
----
 
-⚡Do you want me to also show the **“global max salary among A-names” (one person only)** rewritten using a JOIN (instead of subquery)?
+For more explanation, see [Correlated Subqueries](./11CORRELATED_IMP.md).
+
+---

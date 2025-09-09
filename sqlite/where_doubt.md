@@ -1,25 +1,5 @@
 # Understanding the WHERE Clause in SQLite
 
-## Common Mistake: Using WHERE Incorrectly
-
-A common mistake is to use the WHERE clause with an incorrect condition or syntax. For example:
-
-```sql
-SELECT * FROM products WHERE price;
-```
-
-This command is wrong because `price` alone is not a valid condition. The WHERE clause expects a boolean expression (e.g., `price > 10`).
-
-**Correct usage:**
-
-```sql
-SELECT * FROM products WHERE price > 10;
-```
-
-## How Does WHERE Work?
-
-The WHERE clause filters rows based on a condition. Only rows where the condition is true are returned.
-
 ## Common Error: Using IN with a Single String
 
 If you use the IN clause incorrectly, SQLite may throw an error. For example:
@@ -96,79 +76,12 @@ This makes the `IN` comparison ignore case.
 
 Both approaches will now correctly exclude `'Amit'` and `'Priya'` regardless of uppercase/lowercase.
 
-### Case Sensitivity in WHERE
-
-- **Exact Match:**
-  - The `=` operator matches the entire string (not substrings). For partial matches, use `LIKE` or `GLOB`.
-
-### Examples
+### WHERE
 
 ```sql
--- Case-insensitive match
-SELECT * FROM products WHERE name = 'pen';
-
--- Partial match (case-insensitive)
-SELECT * FROM products WHERE name LIKE '%pen%';
-
--- Case-sensitive match (after enabling case sensitivity)
-PRAGMA case_sensitive_like = ON;
-SELECT * FROM products WHERE name LIKE 'Pen';
+SELECT MAX(salary)
+    FROM worker
+    WHERE salary < (SELECT MAX(salary) FROM worker)
 ```
 
-## Common Error: Using YEAR() and MONTH() Functions in SQLite
-
-If you try to use `YEAR()` and `MONTH()` functions like in MySQL, SQLite will throw an error:
-
-```sql
-SELECT * FROM worker WHERE YEAR(joining_date) = 2021 AND MONTH(joining_date) = 2;
-```
-
-This results in:
-
-```
-Parse error: no such function: year
-```
-
-**Why does this happen?**
-
-- SQLite does not have built-in `YEAR()` and `MONTH()` functions like MySQL or other databases
-- These functions are specific to MySQL and are not available in SQLite
-
-**In MySQL:**
-
-In MySQL, these functions work directly:
-
-```sql
-SELECT * FROM worker WHERE YEAR(joining_date) = 2021 AND MONTH(joining_date) = 2;
-```
-
-This will work without errors in MySQL.
-
-**How to fix it in SQLite:**
-
-Use the `strftime()` function to extract date parts:
-
-- For year: `strftime('%Y', joining_date)`
-- For month: `strftime('%m', joining_date)`
-
-**Correct usage:**
-
-```sql
-SELECT * FROM worker WHERE strftime('%Y', joining_date) = '2021' AND strftime('%m', joining_date) = '02';
-```
-
-Note that `strftime()` returns strings, so compare with strings ('2021', '02').
-
-If you need to compare as numbers, you can cast them:
-
-```sql
-SELECT * FROM worker WHERE CAST(strftime('%Y', joining_date) AS INTEGER) = 2021 AND CAST(strftime('%m', joining_date) AS INTEGER) = 2;
-```
-
-## Summary
-
-- Always use proper boolean expressions in WHERE clauses
-- Use parentheses with IN: `IN ('value1', 'value2')`
-- SQLite is case-sensitive by default; use `LOWER()` or `COLLATE NOCASE` for case-insensitive comparisons
-- Use `strftime()` instead of `YEAR()` and `MONTH()` functions in SQLite
-- Remember that `strftime()` returns strings, so compare accordingly
+**Here the WHERE CLAUSE will DISCARD the row which has greater salary then subQuery val, hence the table is filtered so select will find the max among the filtered one**

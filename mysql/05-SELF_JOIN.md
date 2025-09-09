@@ -140,102 +140,6 @@ First, let's translate your SQL into plain English. The previous query we looked
 
 Your new query is: `ON e.employeeid = m.managerid`
 
-This means: **"For each employee `e`, find every employee `m` who lists `e` as their manager."**
-
-In simpler terms, you've accidentally written a query to find **who reports to whom**. You're listing out all the managers and their direct reports.
-
-### Visualizing the Step-by-Step Process
-
-Imagine MariaDB is looking at two copies of your `employees` table. Because of your `ON` condition, the roles are now different:
-
-- **`employees AS e`** (The Left Table): This copy represents the **Potential Manager**.
-- **`employees AS m`** (The Right Table): This copy represents the **Direct Report**.
-
-The query will go through every single row in the left table (`e`) and try to find matches in the right table (`m`).
-
----
-
-#### **Step 1: Take the first row from `e` (Aarav Sharma, ID=1)**
-
-- MariaDB looks at `e.EmployeeID`, which is **1**.
-- It now searches the **entire `m` table** for any row where `m.ManagerID` is **1**.
-- It finds two matches!
-  - Bhavna Kumar has `ManagerID = 1`.
-  - Chetan Desai has `ManagerID = 1`.
-- **Result:** It creates two rows in the output.
-
-| (from e) | (from m)      |
-| :------- | :------------ | --- | ------------- |
-| `1       | Aarav Sharma` | `2  | Bhavna Kumar` |
-| `1       | Aarav Sharma` | `3  | Chetan Desai` |
-
-_(This explains the first two rows of your output.)_
-
----
-
-#### **Step 2: Take the second row from `e` (Bhavna Kumar, ID=2)**
-
-- MariaDB looks at `e.EmployeeID`, which is **2**.
-- It now searches the **entire `m` table** for any row where `m.ManagerID` is **2**.
-- It finds two matches!
-  - Divya Reddy has `ManagerID = 2`.
-  - Farhan Ali has `ManagerID = 2`.
-- **Result:** It creates two more rows in the output.
-
-| (from e) | (from m)      |
-| :------- | :------------ | --- | ------------ |
-| `2       | Bhavna Kumar` | `4  | Divya Reddy` |
-| `2       | Bhavna Kumar` | `5  | Farhan Ali`  |
-
-_(This explains the third and fourth rows of your output.)_
-
----
-
-#### **Step 3: Take the third row from `e` (Chetan Desai, ID=3)**
-
-- MariaDB looks at `e.EmployeeID`, which is **3**.
-- It searches the `m` table for `m.ManagerID = 3`.
-- It finds one match: Geeta Singh.
-- **Result:** It creates one more row.
-
-| (from e) | (from m)      |
-| :------- | :------------ | --- | ------------ |
-| `3       | Chetan Desai` | `6  | Geeta Singh` |
-
-_(This explains the fifth row of your output.)_
-
----
-
-#### **Step 4: Take the fourth row from `e` (Divya Reddy, ID=4)**
-
-- MariaDB looks at `e.EmployeeID`, which is **4**.
-- It searches the `m` table for `m.ManagerID = 4`.
-- **It finds no matches.** No one reports to Divya.
-- **Result:** Because you used a `LEFT JOIN`, the query still keeps the row from the left table (`e`) and fills the columns from the right table (`m`) with `NULL`.
-
-| (from e) | (from m)     |
-| :------- | :----------- | ------ |
-| `4       | Divya Reddy` | `NULL` |
-
-_(This explains the sixth row of your output.)_
-
----
-
-#### **Steps 5 & 6: Farhan Ali (ID=5) and Geeta Singh (ID=6)**
-
-- The exact same process happens for Farhan and Geeta.
-- No one in the table has `ManagerID = 5` or `ManagerID = 6`.
-- Since it's a `LEFT JOIN`, their rows from table `e` are kept, and the columns from table `m` become `NULL`.
-
-| (from e) | (from m)     |
-| :------- | :----------- | ------ |
-| `5       | Farhan Ali`  | `NULL` |
-| `6       | Geeta Singh` | `NULL` |
-
-_(This explains the final two rows of your output.)_
-
-### Summary
-
 The key difference is the `ON` clause:
 
 - **To find an employee's manager:** `ON E.ManagerID = M.EmployeeID`
@@ -254,6 +158,8 @@ FROM
 LEFT JOIN
     employees AS M ON E.ManagerID = M.EmployeeID;
 ```
+
+**This will search -> Which employee M is the manager of this employee E seaching in the same table M.**
 
 The goal of this query is to list **every single employee** and show their manager's name next to them. The `LEFT JOIN` is crucial because it ensures even employees without a manager (like the CEO) are included in the final list.
 

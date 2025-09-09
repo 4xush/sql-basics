@@ -181,4 +181,136 @@ Sample output (first few rows):
 - **FULL JOIN**: All from both (use UNION in MySQL).
 - **CROSS JOIN**: Cartesian product of both.
 
-Use JOINs to combine data efficiently based on relationships between tables.
+
+Perfect example 👍 you just ran a **correlated subquery ranking trick**. Let me explain what’s happening step by step:
+
+---
+
+### Query:
+
+```sql
+SELECT w1.*
+FROM worker w1
+WHERE 3 = (
+  SELECT COUNT(salary)
+  FROM worker w2
+  WHERE w2.salary >= w1.salary
+);
+```
+
+---
+
+### 🔎 How it works
+
+* For each row `w1` in `worker`, the subquery counts **how many salaries are greater than or equal to `w1.salary`**.
+
+* That count = **rank position (descending)** of that salary.
+
+* Example with your data (ordered `salary desc`):
+
+| Rank | Salary | Name    |
+| ---- | ------ | ------- |
+| 1    | 500000 | Meena   |
+| 2    | 470000 | Amitabh |
+| 2    | 470000 | Suresh  |
+| 4    | 450000 | Amit    |
+| 5    | 400000 | Anita   |
+| 6    | 320000 | Kiran   |
+| 7    | 300000 | Rohit   |
+| 8    | 250000 | Priya   |
+| 9    | 200000 | Arjun   |
+| 10   | 80000  | Vikram  |
+
+---
+
+### ✅ When you do:
+
+* `WHERE 3 = (...)` → You get everyone at **rank 3** (so 470000 → Amitabh & Suresh).
+* `WHERE 4 = (...)` → You get rank 4 (450000 → Amit).
+
+So this is basically a **manual ranking system using correlated subqueries**.
+
+For detailed explanation, see [Correlated Subqueries](./9CORRELATED_SUBQ.md).
+
+---
+
+### 📌 Key Observations
+
+* This avoids `ORDER BY LIMIT/OFFSET`.
+* Handles ties automatically (you got **two people in rank 3** because both have salary = 470000).
+* Works in MySQL/MariaDB/SQLite even if they don’t support `RANK()` window function.
+
+---
+
+### IMPLICIT JOIN
+
+ **writing a join but without explicitly using the `JOIN` keyword** (so basically the *old-style join* using `FROM` and `WHERE`).
+
+---
+
+### Example Table
+
+```sql
+worker
++------------+--------+---------+
+| worker_id  | name   | dept_id |
++------------+--------+---------+
+| 1          | Amit   | 10      |
+| 2          | Suresh | 20      |
+| 3          | Anita  | 10      |
++------------+--------+---------+
+
+department
++---------+---------------+
+| dept_id | dept_name     |
++---------+---------------+
+| 10      | HR            |
+| 20      | IT            |
++---------+---------------+
+```
+
+---
+
+### 1️⃣ Normal `JOIN` syntax
+
+```sql
+SELECT w.worker_id, w.name, d.dept_name
+FROM worker w
+JOIN department d ON w.dept_id = d.dept_id;
+```
+
+---
+
+### 2️⃣ Same thing **without JOIN**
+
+This is the “implicit join” style:
+
+```sql
+SELECT w.worker_id, w.name, d.dept_name
+FROM worker w, department d
+WHERE w.dept_id = d.dept_id;
+```
+
+---
+
+✅ Both queries produce:
+
+```
++-----------+--------+-----------+
+| worker_id | name   | dept_name |
++-----------+--------+-----------+
+| 1         | Amit   | HR        |
+| 2         | Suresh | IT        |
+| 3         | Anita  | HR        |
++-----------+--------+-----------+
+```
+
+---
+
+🔑 Notes:
+
+* This **works the same** as `INNER JOIN`.
+* But it’s considered **old style** SQL. The explicit `JOIN ... ON ...` is more readable, especially when mixing `LEFT/RIGHT JOIN`.
+* Without the `WHERE`, you get a **Cartesian product** (every worker × every department).
+
+---
